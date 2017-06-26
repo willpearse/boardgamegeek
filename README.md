@@ -1,0 +1,1 @@
+A quick BGG scraper in Ruby
