@@ -23,10 +23,10 @@ OptionParser.new do |opts|
 end.parse!
 
 
-got_games = 0; curr_page = 1; rank = 1
+got_games = 0; curr_page = 7; rank = 601
 
 CSV.open(options[:output], "w") do |row|
-  row << ["rank", "ID", "name", "mechanics", "families", "categories", "n.ratings", "rating", "bayes.rating", "owned", "one.player","two.players","three.players","four.players","many.players", "age", "language", "n.weight","weight"]
+  row << ["rank", "ID", "name", "year", "mechanics", "families", "categories", "n.ratings", "rating", "bayes.rating", "owned", "min_players","max_players","play_time","min_play_time","max_play_time", "one.player","two.players","three.players","four.players","many.players", "age", "language", "n.weight","weight"]
 
   while got_games < options[:number]
     page = Nokogiri::HTML(open("https://boardgamegeek.com/browse/boardgame/page/#{curr_page}").read)
@@ -41,7 +41,13 @@ CSV.open(options[:output], "w") do |row|
       mechanics = game.css("boardgamemechanic").map {|x| x.children.text}.join "|"
       families = game.css("boardgamefamily").map {|x| x.children.text}.join "|"
       categories = game.css("boardgamecategory").map {|x| x.children.text}.join "|"
+      year = game.css("yearpublished").text.to_i
 
+      min_players = game.css("minplayers").text.to_i
+      max_players = game.css("maxplayers").text.to_i
+      play_time = game.css("playingtime").text.to_i 
+      min_play_time = game.css("minplaytime").text.to_i
+      max_play_time = game.css("maxplaytime").text.to_i
       
       n_ratings = game.css("usersrated").text.to_i
       rating = game.css("average").text.to_f
@@ -72,11 +78,11 @@ CSV.open(options[:output], "w") do |row|
       age = [1,3,5,7,9,11,13,15,17].map {|x| game.css("poll[name='suggested_playerage']").children[1].children[x]["numvotes"].to_i}.join "|"
       language = [1,3,5,7,9].map {|x| game.css("poll[name='language_dependence']").children[1].children[x]["numvotes"].to_i}.join "|"
 
-      weight = game.css("averageweight").text.to_i
+      weight = game.css("averageweight").text.to_f
       n_weight = game.css("numweight").text.to_i
 
       
-      row << [rank, id, name, mechanics, families, categories, n_ratings, rating, bayes_rating, owned, one_player,two_players,three_players,four_players,many_players, age, language, n_weight, weight]
+      row << [rank, id, name, year, mechanics, families, categories, n_ratings, rating, bayes_rating, owned, min_players,max_players,play_time,min_play_time,max_play_time, one_player,two_players,three_players,four_players,many_players, age, language, n_weight, weight]
       
       got_games += 1
       rank += 1
@@ -89,4 +95,3 @@ CSV.open(options[:output], "w") do |row|
 end
 
 puts "Finshed!"
-
