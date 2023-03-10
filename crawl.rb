@@ -23,17 +23,17 @@ OptionParser.new do |opts|
 end.parse!
 
 
-got_games = 0; curr_page = 7; rank = 601
+got_games = 0; curr_page = 1; rank = 1
 
 CSV.open(options[:output], "w") do |row|
   row << ["rank", "ID", "name", "year", "mechanics", "families", "categories", "n.ratings", "rating", "bayes.rating", "owned", "min_players","max_players","play_time","min_play_time","max_play_time", "one.player","two.players","three.players","four.players","many.players", "age", "language", "n.weight","weight"]
 
   while got_games < options[:number]
-    page = Nokogiri::HTML(open("https://boardgamegeek.com/browse/boardgame/page/#{curr_page}").read)
+    page = Nokogiri::HTML(URI.open("https://boardgamegeek.com/browse/boardgame/page/#{curr_page}").read)
     
     page.css("td[class='collection_thumbnail']").each do |entry|
       game_url = entry.css("a")[0].values[0]
-      game = Nokogiri::XML(open("https://www.boardgamegeek.com/xmlapi#{game_url}?stats=1").read)
+      game = Nokogiri::XML(URI.open("https://www.boardgamegeek.com/xmlapi#{game_url}?stats=1").read)
       name = game_url[/[a-z0-9-]+$/]
       id = game_url[/[0-9]+/]
 
@@ -54,7 +54,11 @@ CSV.open(options[:output], "w") do |row|
       bayes_rating = game.css("bayesaverage").text.to_f
       owned = game.css("owned").text.to_i
 
-      one_player = [1,3,5].map {|x| game.css("results[numplayers='1']")[0].children[x].attributes["numvotes"].text.to_i}.join "|"
+      begin
+        one_player = [1,3,5].map {|x| game.css("results[numplayers='1']")[0].children[x].attributes["numvotes"].text.to_i}.join "|"
+      rescue
+        one_player = "NA"
+      end
       begin
         two_players = [1,3,5].map {|x| game.css("results[numplayers='2']")[0].children[x].attributes["numvotes"].text.to_i}.join "|"
       rescue
